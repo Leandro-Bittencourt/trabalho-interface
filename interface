@@ -1,0 +1,80 @@
+package br.univille.log;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public enum Level {
+    WARNING,
+    DEBUG,
+    ERROR
+}
+
+interface Logger {
+    void log(Level level, String message);
+}
+
+class LoggerConsole implements Logger {
+    @Override
+    public void log(Level level, String message) {
+        String color;
+        switch (level) {
+            case DEBUG:
+                color = "\u001B[32m"; // Verde
+                break;
+            case WARNING:
+                color = "\u001B[33m"; // Amarelo
+                break;
+            case ERROR:
+                color = "\u001B[31m"; // Vermelho
+                break;
+            default:
+                color = "\u001B[0m"; // Reset
+        }
+
+        String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        System.out.println(color + "[" + time + "] " + level + ": " + message + "\u001B[0m");
+    }
+}
+
+
+class LoggerFile implements Logger {
+    private static final String FILE_NAME = "log.txt";
+
+
+    public void log(Level level, String message) {
+        String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        try (FileWriter writer = new FileWriter(FILE_NAME, true)) {
+            writer.write("[" + time + "] " + level + ": " + message + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+public class LoggerFactory {
+    public static Logger onConsole() {
+        return new LoggerConsole();
+    }
+
+    public static Logger onFile() {
+        return new LoggerFile();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Logger consoleLogger = LoggerFactory.onConsole();
+        Logger fileLogger = LoggerFactory.onFile();
+
+        consoleLogger.log(Level.DEBUG, "This is a debug message.");
+        consoleLogger.log(Level.WARNING, "This is a warning message.");
+        consoleLogger.log(Level.ERROR, "This is an error message.");
+
+        fileLogger.log(Level.DEBUG, "This is a debug message.");
+        fileLogger.log(Level.WARNING, "This is a warning message.");
+        fileLogger.log(Level.ERROR, "This is an error message.");
+    }
+}
